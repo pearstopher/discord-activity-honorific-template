@@ -1,7 +1,6 @@
 {{-
 ##
     CONFIGURATION
-
 ##
 
 # length of scrolling characters
@@ -109,20 +108,34 @@ spacing = "  "
 artist = replace_chars(clean_title((Activity.Artists[0]  | string.upcase) + spacing))
 track = replace_chars(clean_title((Activity.TrackTitle  | string.upcase) + spacing))
 if infinite_scroll
-    full_title = artist + track + replace_chars(spacing)
-    full_title = full_title + full_title + full_title
+    single_title = artist + track + replace_chars(spacing)
+    full_title = single_title + single_title + single_title
 end
 
 
+# create a custom clock to disallow updates with < update_interval seconds left
+# this prevents updates being sent too fast if the scroll updates immediately before a new song
+# Activity.Elapsed.TotalSeconds is a float so total is to be created from two ints
+safety_total_seconds = Activity.Elapsed.Minutes * 60 + Activity.Elapsed.Seconds
+safety_max = Activity.Duration.TotalSeconds - update_interval
+if (safety_total_seconds > safety_max)
+    safety_total_seconds = safety_max
+end
+safety_minutes = (safety_total_seconds / 60) | math.floor
+safety_seconds = safety_total_seconds % 60
+
+
 # set up track timers in the format M:SS
-elapsed_seconds = (Activity.Elapsed.Seconds - (Activity.Elapsed.Seconds % update_interval)) % 60 + 1
-time_elapsed = Activity.Elapsed.Minutes | string.append ":" | string.append (elapsed_seconds | math.format "D2")
+# round seconds to the closest update interval
+# offset by 1 so it starts at 0:01 instead of 0:00
+elapsed_seconds = (safety_seconds - (safety_seconds % update_interval))  + 1
+time_elapsed = safety_minutes | string.append ":" | string.append (elapsed_seconds | math.format "D2")
 time_total = Activity.Duration | string.slice 4 | string.split "." | array.first
 
 if infinite_scroll
     # set up infinite scrolling
     scroll_title = full_title
-    cycle_length = scroll_title | string.size
+    cycle_length = single_title | string.size
     position = (((Activity.Elapsed.Seconds / update_interval) | math.floor) * chars_at_a_time) % cycle_length
     scroll_title = scroll_title | string.slice position max_chars
 
