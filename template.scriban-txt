@@ -98,7 +98,7 @@ spacing = "  "
 artist = replace_chars(clean_title((Activity.Artists[0]  | string.upcase) + spacing))
 track = replace_chars(clean_title((Activity.TrackTitle  | string.upcase) + spacing))
 if infinite_scroll
-    full_title = artist + track + spacing
+    full_title = artist + track + replace_chars(spacing)
     full_title = full_title + full_title + full_title
 end
 
