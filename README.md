@@ -17,7 +17,7 @@ This template displays your current Spotify song in one of the following formats
 - No Timers
   ```
             Player Name
-  <• ♪ [Scrolling song info] ♪ 3:45 •>
+  <• ♪ [Scrolling song info] ♪ •>
   ```
 
 The song info can be displayed as:
