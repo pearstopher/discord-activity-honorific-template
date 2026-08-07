@@ -1,94 +1,100 @@
 {{-
-###########
-# constants #
-###########
+##
+    CONSTANTS
+##
 
-# number of characters to display in scrolling title
+# length of scrolling characters
 max_chars = 10
+# honorific supports a max of 32
+# timers add 5 characters on each side (M:SS_ and _M:SS)
 
-# how often to update in seconds
-# seems to work as low as 2 before it breaks for synced pairs
+# title updates every update_interval seconds
 update_interval = 3
-
-# how many updates to make per scroll
-scroll_updates = 7
+# seems to work as low as 2 before it breaks for (lightless) synced pairs
 
 # how how many characters to scroll per update
 chars_at_a_time = 3
 
+# how many times to update before switching to the next scroll
+scroll_updates = 7
 
+##
+    FUNCTIONS
+##
 
-# remove characters that can't be replaced with fixed-width symbols
-dirty_title = (Activity.Artists[0]  | string.upcase) + "  " + "split" + (Activity.TrackTitle  | string.upcase) + "  "
-title = ""
-for i in 0..(dirty_title | string.size)
-    char = dirty_title | string.slice i 1
-    if char >= "A" && char <= "Z" || char >= "a" && char <= "z" || char >= "0" && char <= "9" || char == " "
-        title = title + char
+# strip out all characters that can't be replaced with fixed-width symbols
+func clean_title(value)
+    result = ""
+    value = value | string.upcase
+
+    for i in 0..(value | string.size)
+        char = value | string.slice i 1
+
+        if char >= "A" && char <= "Z" || char >= "0" && char <= "9" || char == " "
+            result = result + char
+        end
     end
+
+    ret result
+end
+
+# replace characters with XIV block letters
+func replace_chars(title)
+    title = title | string.replace "A" ""
+    title = title | string.replace "B" ""
+    title = title | string.replace "C" ""
+    title = title | string.replace "D" ""
+    title = title | string.replace "E" ""
+    title = title | string.replace "F" ""
+    title = title | string.replace "G" ""
+    title = title | string.replace "H" ""
+    title = title | string.replace "I" ""
+    title = title | string.replace "J" ""
+    title = title | string.replace "K" ""
+    title = title | string.replace "L" ""
+    title = title | string.replace "M" ""
+    title = title | string.replace "N" ""
+    title = title | string.replace "O" ""
+    title = title | string.replace "P" ""
+    title = title | string.replace "Q" ""
+    title = title | string.replace "R" ""
+    title = title | string.replace "S" ""
+    title = title | string.replace "T" ""
+    title = title | string.replace "U" ""
+    title = title | string.replace "V" ""
+    title = title | string.replace "W" ""
+    title = title | string.replace "X" ""
+    title = title | string.replace "Y" ""
+    title = title | string.replace "Z" ""
+    title = title | string.replace "0" ""
+    title = title | string.replace "1" ""
+    title = title | string.replace "2" ""
+    title = title | string.replace "3" ""
+    title = title | string.replace "4" ""
+    title = title | string.replace "5" ""
+    title = title | string.replace "6" ""
+    title = title | string.replace "7" ""
+    title = title | string.replace "8" ""
+    title = title | string.replace "9" ""
+    title = title | string.replace " " "■"
+
+    ret title
 end
 
 
-# replace letters with XIV block letters
-title = title | string.replace "A" ""
-title = title | string.replace "B" ""
-title = title | string.replace "C" ""
-title = title | string.replace "D" ""
-title = title | string.replace "E" ""
-title = title | string.replace "F" ""
-title = title | string.replace "G" ""
-title = title | string.replace "H" ""
-title = title | string.replace "I" ""
-title = title | string.replace "J" ""
-title = title | string.replace "K" ""
-title = title | string.replace "L" ""
-title = title | string.replace "M" ""
-title = title | string.replace "N" ""
-title = title | string.replace "O" ""
-title = title | string.replace "P" ""
-title = title | string.replace "Q" ""
-title = title | string.replace "R" ""
-title = title | string.replace "S" ""
-title = title | string.replace "T" ""
-title = title | string.replace "U" ""
-title = title | string.replace "V" ""
-title = title | string.replace "W" ""
-title = title | string.replace "X" ""
-title = title | string.replace "Y" ""
-title = title | string.replace "Z" ""
-title = title | string.replace "0" ""
-title = title | string.replace "1" ""
-title = title | string.replace "2" ""
-title = title | string.replace "3" ""
-title = title | string.replace "4" ""
-title = title | string.replace "5" ""
-title = title | string.replace "6" ""
-title = title | string.replace "7" ""
-title = title | string.replace "8" ""
-title = title | string.replace "9" ""
-title = title | string.replace " " "■"
-# alternates □■♪》《
-
-# easier to split than to replace everything twice
-parts = title | string.split "split"
-artist = parts[0]
-track = parts[1]
+# generate title and artist strings with spacing to separate cycles
+spacing = "  "
+artist = replace_chars(clean_title((Activity.Artists[0]  | string.upcase) + spacing))
+track = replace_chars(clean_title((Activity.TrackTitle  | string.upcase) + spacing))
 
 
-# set up timers
+# set up track timers in the format M:SS
 elapsed_seconds = (Activity.Elapsed.Seconds - (Activity.Elapsed.Seconds % update_interval)) % 60 + 1
 time_elapsed = Activity.Elapsed.Minutes | string.append ":" | string.append (elapsed_seconds | math.format "D2")
 time_total = Activity.Duration | string.slice 4 | string.split "." | array.first
 
 
-# set up infinite scrolling
-# scroll_title = title + title + title
-# cycle_length = title | string.size
-# position = (((Activity.Elapsed.TotalSeconds / update_interval) | math.floor) * chars_at_a_time) % cycle_length
-# scroll_title = scroll_title | string.slice position max_chars
-
-# set up infinite scrolling
-
+# set up scrolling logic
 scroll_artist = artist + artist + artist
 scroll_track = track + track + track
 artist_cycle = artist | string.size
@@ -105,18 +111,18 @@ total_time = artist_time + track_time
 phase = Activity.Elapsed.TotalSeconds % total_time
 
 if phase < artist_time
-
     artist_position = (((phase / update_interval) | math.floor) * chars_at_a_time) % artist_cycle
     scroll_title = scroll_artist | string.slice artist_position max_chars
 
 else
-
     track_phase = phase - artist_time
     track_position = (((track_phase / update_interval) | math.floor) * chars_at_a_time) % track_cycle
     scroll_title = scroll_track | string.slice track_position max_chars
 
 end
+
+
+# generate final output
+output = time_elapsed + " " + scroll_title + " " + time_total | string.truncate 32
+output
 -}}
-
-
-{{ time_elapsed }} {{  scroll_title }} {{ time_total }}
