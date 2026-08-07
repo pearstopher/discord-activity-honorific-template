@@ -6,7 +6,11 @@
 # length of scrolling characters
 max_chars = 10
 # honorific supports a max of 32
-# timers add 5 characters on each side (M:SS_ and _M:SS)
+
+# display the timers?
+display_timers = true
+# when true adds +10 characters (M:SS_ and _M:SS)
+# when false adds +4 characters (♪_ and _♪)
 
 # title updates every update_interval seconds
 update_interval = 3
@@ -17,6 +21,8 @@ chars_at_a_time = 3
 
 # how many times to update before switching to the next scroll
 scroll_updates = 7
+
+
 
 ##
     FUNCTIONS
@@ -123,6 +129,11 @@ end
 
 
 # generate final output
-output = time_elapsed + " " + scroll_title + " " + time_total | string.truncate 32
+if display_timers
+    output = time_elapsed + " " + scroll_title + " " + time_total | string.truncate 32
+else
+    output = "♪ " + scroll_title + " ♪" | string.truncate 32
+end
+
 output
 -}}
