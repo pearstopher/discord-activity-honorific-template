@@ -5,6 +5,27 @@ This is my own personal [Scriban](https://github.com/scriban/scriban) template f
 
 *Note: It is not tested with the [SpotifyHonorific](https://valiice.github.io/SpotifyHonorific/) plugin but I've replaced the `Context.SecsElapsed` timer in favor of the `Activity.Elapsed` and other `Activity`-based timers in the hopes that that will help with compatibility until I have a chance to install and test the Spotify-only fork.*
 
+## Capabilities
+
+This template displays your current Spotify song in one of the following formats based on the values configured in the template:
+
+- Timers
+  ```
+               Player Name
+  <• 0:12 [Scrolling song info] 3:45 •>
+  ```
+- No Timers
+  ```
+            Player Name
+  <• ♪ [Scrolling song info] ♪ 3:45 •>
+  ```
+
+The song info can be displayed as:
+
+- An infinite scrolling loop of *Artist Name* - *Song Title* - ...
+- Alternating between *Artist Name* and *Song Title* individually
+
+The song text can be displayed as FFXIV block letters (monospace, keeps your title a fixed width) or as regular text (increased readability, but makes your title change size with each update).
 
 ## External Documentation
 
