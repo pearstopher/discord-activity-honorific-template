@@ -17,7 +17,12 @@ update_interval = 3
 # seems to work as low as 2 before it breaks for (lightless) synced pairs
 
 # how how many characters to scroll per update
-chars_at_a_time = 3
+chars_at_a_time = 2
+
+# infinite scroll
+infinite_scroll = true
+# if true, repeats artist and track name infinitely
+# if false, alternates between artist and track names
 
 # how many times to update before switching to the next scroll
 scroll_updates = 7
@@ -92,6 +97,10 @@ end
 spacing = "  "
 artist = replace_chars(clean_title((Activity.Artists[0]  | string.upcase) + spacing))
 track = replace_chars(clean_title((Activity.TrackTitle  | string.upcase) + spacing))
+if infinite_scroll
+    full_title = artist + track + spacing
+    full_title = full_title + full_title + full_title
+end
 
 
 # set up track timers in the format M:SS
@@ -99,34 +108,37 @@ elapsed_seconds = (Activity.Elapsed.Seconds - (Activity.Elapsed.Seconds % update
 time_elapsed = Activity.Elapsed.Minutes | string.append ":" | string.append (elapsed_seconds | math.format "D2")
 time_total = Activity.Duration | string.slice 4 | string.split "." | array.first
 
-
-# set up scrolling logic
-scroll_artist = artist + artist + artist
-scroll_track = track + track + track
-artist_cycle = artist | string.size
-track_cycle = track | string.size
-
-artist_updates = ((artist_cycle / chars_at_a_time) | math.ceil)
-track_updates = ((track_cycle / chars_at_a_time) | math.ceil)
-
-artist_time = update_interval * scroll_updates
-track_time = update_interval * scroll_updates
-
-total_time = artist_time + track_time
-
-phase = Activity.Elapsed.TotalSeconds % total_time
-
-if phase < artist_time
-    artist_position = (((phase / update_interval) | math.floor) * chars_at_a_time) % artist_cycle
-    scroll_title = scroll_artist | string.slice artist_position max_chars
+if infinite_scroll
+    # set up infinite scrolling
+    scroll_title = full_title
+    cycle_length = scroll_title | string.size
+    position = (((Activity.Elapsed.Seconds / update_interval) | math.floor) * chars_at_a_time) % cycle_length
+    scroll_title = scroll_title | string.slice position max_chars
 
 else
-    track_phase = phase - artist_time
-    track_position = (((track_phase / update_interval) | math.floor) * chars_at_a_time) % track_cycle
-    scroll_title = scroll_track | string.slice track_position max_chars
+    # set up separate scrolling logic
+    scroll_artist = artist + artist + artist
+    scroll_track = track + track + track
+    artist_cycle = artist | string.size
+    track_cycle = track | string.size
 
+    # keep artist and track time separate to add cycles or edit times independently
+    artist_time = update_interval * scroll_updates
+    track_time = update_interval * scroll_updates
+    total_time = artist_time + track_time
+    phase = Activity.Elapsed.TotalSeconds % total_time
+
+    if phase < artist_time
+        artist_position = (((phase / update_interval) | math.floor) * chars_at_a_time) % artist_cycle
+        scroll_title = scroll_artist | string.slice artist_position max_chars
+
+    else
+        track_phase = phase - artist_time
+        track_position = (((track_phase / update_interval) | math.floor) * chars_at_a_time) % track_cycle
+        scroll_title = scroll_track | string.slice track_position max_chars
+
+    end
 end
-
 
 # generate final output
 if display_timers
