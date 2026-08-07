@@ -136,7 +136,7 @@ if infinite_scroll
     # set up infinite scrolling
     scroll_title = full_title
     cycle_length = single_title | string.size
-    position = (((Activity.Elapsed.Seconds / update_interval) | math.floor) * chars_at_a_time) % cycle_length
+    position = (((safety_total_seconds / update_interval) | math.floor) * chars_at_a_time) % cycle_length
     scroll_title = scroll_title | string.slice position max_chars
 
 else
@@ -150,7 +150,7 @@ else
     artist_time = update_interval * scroll_updates
     track_time = update_interval * scroll_updates
     total_time = artist_time + track_time
-    phase = Activity.Elapsed.TotalSeconds % total_time
+    phase = safety_total_seconds % total_time
 
     if phase < artist_time
         artist_position = (((phase / update_interval) | math.floor) * chars_at_a_time) % artist_cycle
