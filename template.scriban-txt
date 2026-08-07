@@ -1,31 +1,42 @@
 {{-
 ##
-    CONSTANTS
+    CONFIGURATION
+
 ##
 
 # length of scrolling characters
 max_chars = 10
 # honorific supports a max of 32
 
-# display the timers?
+# display song timers
 display_timers = true
-# when true adds +10 characters (M:SS_ and _M:SS)
-# when false adds +4 characters (♪_ and _♪)
+# +10 to length when true (M:SS_ and _M:SS)
+# +4 to length when false (♪_ and _♪)
 
-# title updates every update_interval seconds
+# update the title every X seconds
 update_interval = 3
-# seems to work as low as 2 before it breaks for (lightless) synced pairs
+# seems to work as low as 2 before it breaks for synced pairs
+# tested with Lightless
 
-# how how many characters to scroll per update
+# scroll by X characters at a time
 chars_at_a_time = 2
 
-# infinite scroll
+# enable infinite scroll
 infinite_scroll = true
 # if true, repeats artist and track name infinitely
 # if false, alternates between artist and track names
 
-# how many times to update before switching to the next scroll
+# switch between artist and track every X updates
 scroll_updates = 7
+
+
+##
+    DON'T EDIT BELOW THIS LINE UNLESS YOU KNOW WHAT YOU'RE DOING
+
+    In which case, I'd love to see a pull request with your additions!
+    https://github.com/pearstopher/discord-activity-honorific-template
+##
+
 
 
 
