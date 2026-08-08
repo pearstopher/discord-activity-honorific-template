@@ -83,9 +83,3 @@ More info at [docs.discordnet.dev/guides/int_framework/intro.html](https://docs.
 - Milliseconds
 - TotalDays, -Hours, etc.
 - Ticks
-
-Context.SecsElapsed is a double
-
-
-
-DiscordActivityHonorific's Activity.Duration.Seconds is an int
