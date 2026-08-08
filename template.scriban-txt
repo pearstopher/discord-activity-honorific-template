@@ -43,24 +43,30 @@ scroll_updates = 7
     CROSS PLUGIN COMPATIBILITY
 ##
 
-
 # determine which plugin is being used
 if ! Activity.Popularity
     discord = true
 end
 
-# all plugin-provided template variables are located here
+# Shared Template Variables
+# ActivityShared = Activity.Shared
+
+# Plugin Specific Variables
 if discord
     ActivityElapsedTotalSeconds = Activity.Elapsed.TotalSeconds
     ActivityDurationTotalSeconds = Activity.Duration.TotalSeconds
     ActivityArtist = Activity.Artists[0]
     ActivityTrackTitle = Activity.TrackTitle
 else
+    # Context.SecsElapsed does not match Activity.Elapsed and is less reliable
+    # It tracks the script context and is not related to Spotify at all
+    # For example, if you pause a song and restart it the context restarts at 0
     ActivityElapsedTotalSeconds = Context.SecsElapsed
     ActivityDurationTotalSeconds = Activity.DurationMs / 1000 | math.floor
     ActivityArtist = Activity.Artists[0].Name
     ActivityTrackTitle = Activity.Name
 end
+# No template variables below this line
 
 
 ##
