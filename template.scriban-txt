@@ -43,11 +43,13 @@ scroll_updates = 7
     CROSS PLUGIN COMPATIBILITY
 ##
 
+
 # determine which plugin is being used
 if ! Activity.Popularity
     discord = true
 end
 
+# all plugin-provided template variables are located here
 if discord
     ActivityElapsedTotalSeconds = Activity.Elapsed.TotalSeconds
     ActivityDurationTotalSeconds = Activity.Duration.TotalSeconds
@@ -59,7 +61,6 @@ else
     ActivityArtist = Activity.Artists[0].Name
     ActivityTrackTitle = Activity.Name
 end
-
 
 
 ##
