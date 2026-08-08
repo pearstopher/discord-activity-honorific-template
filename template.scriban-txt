@@ -40,6 +40,12 @@ scroll_updates = 7
 
 
 ##
+    CROSS PLUGIN COMPATIBILITY
+##
+
+
+
+##
     FUNCTIONS
 ##
 
@@ -115,8 +121,7 @@ end
 
 # create a custom clock to disallow updates with < update_interval seconds left
 # this prevents updates being sent too fast if the scroll updates immediately before a new song
-# Activity.Elapsed.TotalSeconds is a float so total is to be created from two ints
-safety_total_seconds = Activity.Elapsed.Minutes * 60 + Activity.Elapsed.Seconds
+safety_total_seconds = Activity.Elapsed.TotalSeconds | math.floor
 safety_max = Activity.Duration.TotalSeconds - update_interval
 if (safety_total_seconds > safety_max)
     safety_total_seconds = safety_max
@@ -129,7 +134,10 @@ safety_seconds = safety_total_seconds % 60
 # round seconds to the closest update interval
 # offset by 1 so it starts at 0:01 instead of 0:00
 elapsed_seconds = (safety_seconds - (safety_seconds % update_interval))  + 1
-time_elapsed = safety_minutes | string.append ":" | string.append (elapsed_seconds | math.format "D2")
+if elapsed_seconds < 10
+    elapsed_seconds = "0" + elapsed_seconds
+end
+time_elapsed = safety_minutes | string.append ":" | string.append elapsed_seconds
 time_total = Activity.Duration | string.slice 4 | string.split "." | array.first
 
 if infinite_scroll
