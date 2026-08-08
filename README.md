@@ -1,9 +1,10 @@
 # Discord Activity Honorific Template
 
-This is my own personal [Scriban](https://github.com/scriban/scriban) template for the Final Fantasy 14 [Dalamud](https://github.com/goatcorp/Dalamud) plugin [Discord Activity Honorific](https://github.com/anya-hichu/DiscordActivityHonorific).
+This is my own personal [Scriban](https://github.com/scriban/scriban) Spotify template for the Final Fantasy 14 [Dalamud](https://github.com/goatcorp/Dalamud) plugin [Discord Activity Honorific](https://github.com/anya-hichu/DiscordActivityHonorific).
 
+If you want to use it, paste the `template.scriban-txt` code into the Template (second) text box in your plugin configuration. The Filter (first) box should be empty.
 
-*Note: It is not tested with the [SpotifyHonorific](https://valiice.github.io/SpotifyHonorific/) plugin but I've replaced the `Context.SecsElapsed` timer in favor of the `Activity.Elapsed` and other `Activity`-based timers in the hopes that that will help with compatibility until I have a chance to install and test the Spotify-only fork.*
+*Note: The script is now updated to also work with the [SpotifyHonorific](https://valiice.github.io/SpotifyHonorific/) fork of Discord Activity Honorific. The track timer is slightly less reliable due to* `Activity.Elapsed` *no longer being provided. Personally I recommend using the original plugin unless you have a preference to not use Discord.*
 
 ## Capabilities
 
