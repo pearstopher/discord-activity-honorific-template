@@ -62,6 +62,7 @@ Activity.DurationMs		    int
 Activity.Popularity		    int
 Context.SecsElapsed		    double
 ```
+and still provides access to some others that aren't documented like `Activity.Type`
 
 
 

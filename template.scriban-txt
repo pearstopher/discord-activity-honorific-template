@@ -43,6 +43,23 @@ scroll_updates = 7
     CROSS PLUGIN COMPATIBILITY
 ##
 
+# determine which plugin is being used
+if ! Activity.Popularity
+    discord = true
+end
+
+if discord
+    ActivityElapsedTotalSeconds = Activity.Elapsed.TotalSeconds
+    ActivityDurationTotalSeconds = Activity.Duration.TotalSeconds
+    ActivityArtist = Activity.Artists[0]
+    ActivityTrackTitle = Activity.TrackTitle
+else
+    ActivityElapsedTotalSeconds = Context.SecsElapsed
+    ActivityDurationTotalSeconds = Activity.DurationMs / 1000 | math.floor
+    ActivityArtist = Activity.Artists[0].Name
+    ActivityTrackTitle = Activity.Name
+end
+
 
 
 ##
@@ -111,8 +128,8 @@ end
 
 # generate title and artist strings with spacing to separate cycles
 spacing = "  "
-artist = replace_chars(clean_title((Activity.Artists[0]  | string.upcase) + spacing))
-track = replace_chars(clean_title((Activity.TrackTitle  | string.upcase) + spacing))
+artist = replace_chars(clean_title((ActivityArtist  | string.upcase) + spacing))
+track = replace_chars(clean_title((ActivityTrackTitle  | string.upcase) + spacing))
 if infinite_scroll
     single_title = artist + track + replace_chars(spacing)
     full_title = single_title + single_title + single_title
@@ -121,8 +138,8 @@ end
 
 # create a custom clock to disallow updates with < update_interval seconds left
 # this prevents updates being sent too fast if the scroll updates immediately before a new song
-safety_total_seconds = Activity.Elapsed.TotalSeconds | math.floor
-safety_max = Activity.Duration.TotalSeconds - update_interval
+safety_total_seconds = ActivityElapsedTotalSeconds | math.floor
+safety_max = ActivityDurationTotalSeconds - update_interval
 if (safety_total_seconds > safety_max)
     safety_total_seconds = safety_max
 end
@@ -138,7 +155,12 @@ if elapsed_seconds < 10
     elapsed_seconds = "0" + elapsed_seconds
 end
 time_elapsed = safety_minutes | string.append ":" | string.append elapsed_seconds
-time_total = Activity.Duration | string.slice 4 | string.split "." | array.first
+time_total_minutes = ActivityDurationTotalSeconds / 60 | math.floor
+time_total_seconds = ActivityDurationTotalSeconds % 60
+if time_total_seconds < 10
+    time_total_seconds = "0" + time_total_seconds
+end
+time_total = time_total_minutes | string.append ":" | string.append time_total_seconds
 
 if infinite_scroll
     # set up infinite scrolling
