@@ -54,7 +54,7 @@ end
 # Plugin Specific Variables
 if discord
     ActivityElapsedTotalSeconds = Activity.Elapsed.TotalSeconds
-    ActivityDurationTotalSeconds = Activity.Duration.TotalSeconds
+    ActivityDurationTotalSeconds = Activity.Duration.TotalSeconds | math.floor
     ActivityArtist = Activity.Artists[0]
     ActivityTrackTitle = Activity.TrackTitle
 else
