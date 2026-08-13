@@ -31,8 +31,11 @@ infinite_scroll = false
 # (infinite scroll only) choose how many characters to scroll at a time
 chars_at_a_time = 2
 
-# (alternate only) choose how long to scroll artist/track name before switching
-scroll_updates = 7
+# (alternate only) choose to pad short names with whitespace up to max_width
+padding = false
+
+# (alternate only) choose what type of elipses to display ("...", "")
+elipses = "..."
 
 
 # choose what type of character replacement you prefer if any
@@ -98,7 +101,7 @@ end
 ##
 
 
-# replace characters with XIV block letters
+# (all) replace characters with monospaced or XIV block letters
 # char_replace_type set in config, one of "none" "block" "mono"
 func replace_chars(title, type, block_spaces)
 
@@ -138,13 +141,71 @@ func replace_chars(title, type, block_spaces)
     ret result
 end
 
+# (alternate display) function to determine number of segments
+func segments(str, maxlen, dots)
+    len = str | string.size
+    dotlen = dots | string.size
+
+    # 1 segment is up to maxlen characters
+    if len <= maxlen
+        ret 1
+    # 2 segments are up to maxlen - dotlen characters each
+    else if len <= 2*(maxlen - dotlen)
+        ret 2
+    # 3+ segments
+    # first and last are maxlen - dotlen
+    # middle segments are maxlen - 2dotlen
+    else
+        # subtract the first and last segments, count the middle segments, combine the two
+        ret (len - 2*(maxlen - dotlen)) / (maxlen - 2*dotlen) | math.ceil + 2
+    end
+end
+
+# (alternate display) function to get the correct segment text
+func get_segment(str, seg, segmax, maxlen, dots)
+    len = str | string.size
+    dotlen = dots | string.size
+
+    if segmax == 1
+        ret str
+    else if seg == 1
+        ret str | string.slice 0 (maxlen - dotlen) | string.append dots
+    else if seg == segmax
+        ret dots | string.append (str | string.slice (len - (maxlen - dotlen)) len)
+    else
+        start = len / segmax | math.floor * (seg - 1)
+        ret dots | string.append (str | string.slice start (maxlen - 2*dotlen)) | string.append dots
+    end
+end
+
+# function to correctly resize string
+func resize(str, len, dots)
+    if (str | string.size > len)
+        str = str | string.slice 0 (len - 1)
+        str = str | string.append dots
+    end
+    ret str
+end
+
+# function to double the length that a single frame title is displayed
+func fair(update_interval, segments)
+    if segments == 1
+        update_interval = update_interval * 2
+    end
+    ret update_interval
+end
+
+##
+    END FUNCTIONS
+##
+
 
 # generate title and artist strings with spacing to separate cycles
-space = replace_chars(" ", char_replace_type, block_spaces)
-artist = replace_chars(ActivityArtist, char_replace_type, block_spaces) + space + space
-track = replace_chars(ActivityTrackTitle, char_replace_type, block_spaces)  + space + space
+sp = replace_chars(" ", char_replace_type, block_spaces)
+artist = replace_chars(ActivityArtist, char_replace_type, block_spaces)
+track = replace_chars(ActivityTrackTitle, char_replace_type, block_spaces)
 if infinite_scroll
-    single_title = artist + track + space
+    single_title = artist + sp + sp + track + sp + sp + sp
     full_title = single_title + single_title + single_title
 end
 
@@ -175,7 +236,10 @@ if time_total_seconds < 10
 end
 time_total = time_total_minutes | string.append ":" | string.append time_total_seconds
 
+
+# ready to generate the actual text to display
 if infinite_scroll
+
     # set up infinite scrolling
     scroll_title = full_title
     cycle_length = single_title | string.size
@@ -183,27 +247,23 @@ if infinite_scroll
     scroll_title = scroll_title | string.slice position max_chars
 
 else
-    # set up separate scrolling logic
-    scroll_artist = artist + artist + artist
-    scroll_track = track + track + track
-    artist_cycle = artist | string.size
-    track_cycle = track | string.size
+    # get number of segments for each
+    artist_segs = segments(artist, length, dots)
+    track_segs = segments(track, length, dots)
 
-    # keep artist and track time separate to add cycles or edit times independently
-    artist_time = update_interval * scroll_updates
-    track_time = update_interval * scroll_updates
-    total_time = artist_time + track_time
-    phase = safety_total_seconds % total_time
+    # calculate how long artist and track will be displayed based on frame count
+    artist_secs = artist_segs * fair(update_interval, artist_segs)
+    track_secs = track_segs * fair(update_interval, track_segs)
+    total_secs = artist_secs + track_secs
 
-    if phase < artist_time
-        artist_position = (((phase / update_interval) | math.floor) * chars_at_a_time) % artist_cycle
-        scroll_title = scroll_artist | string.slice artist_position max_chars
-
+    # main display logic
+    secs = safety_total_seconds % total_secs
+    if (secs < artist_secs)
+        segment = (secs) / fair(update_interval, artist_segs) | math.ceil
+        scroll_title = get_segment(artist, segment, artist_segs, length, dots)
     else
-        track_phase = phase - artist_time
-        track_position = (((track_phase / update_interval) | math.floor) * chars_at_a_time) % track_cycle
-        scroll_title = scroll_track | string.slice track_position max_chars
-
+        segment = (secs - artist_secs) / fair(update_interval, track_segs) | math.ceil
+        scroll_title = get_segment(track, segment, track_segs, length, dots)
     end
 end
 
