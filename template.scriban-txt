@@ -32,7 +32,7 @@ infinite_scroll = false
 chars_at_a_time = 2
 
 # (alternate only) choose to pad short names with whitespace up to max_width
-padding = false
+padding = true
 
 # (alternate only) choose what type of elipses to display ("...", "", "…")
 elipses = "..."
@@ -163,12 +163,19 @@ func segments(str, maxlen, dots)
 end
 
 # (alternate display) function to get the correct segment text
-func get_segment(str, seg, segmax, maxlen, dots)
+func get_segment(str, seg, segmax, maxlen, dots, padding, space)
     len = str | string.size
     dotlen = dots | string.size
 
     if segmax == 1
-        ret str
+        # create before/after padding
+        if (! padding) || (len == maxlen)
+            ret str
+        else
+            half_padding = string.repeat space ((maxlen - len) / 2 | math.floor)
+            ret half_padding + str + half_padding
+
+        end
     else if seg == 1
         ret str | string.slice 0 (maxlen - dotlen) | string.append dots
     else if seg == segmax
@@ -261,10 +268,10 @@ else
     secs = safety_total_seconds % total_display_secs
     if (secs < artist_secs)
         segment = (secs) / fair(update_interval, artist_segs) | math.ceil
-        scroll_title = get_segment(artist, segment, artist_segs, max_chars, elipses)
+        scroll_title = get_segment(artist, segment, artist_segs, max_chars, elipses, padding, sp)
     else
         segment = (secs - artist_secs) / fair(update_interval, track_segs) | math.ceil
-        scroll_title = get_segment(track, segment, track_segs, max_chars, elipses)
+        scroll_title = get_segment(track, segment, track_segs, max_chars, elipses, padding, sp)
     end
 end
 
