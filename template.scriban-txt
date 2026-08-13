@@ -28,6 +28,14 @@ infinite_scroll = true
 # switch between artist and track every X updates
 scroll_updates = 7
 
+# type of character replacement
+char_replace_type = "block"
+# "none" = supports all characters, not fixed width
+# "mono" = monospaced letters (upper-, lowercase, numbers, spaces slightly too wide)
+# "block" = XIV block letters (uppercase, numbers) true fixed width
+block_spaces = false
+# for block text, replaces spaces with empty block ■ if true
+
 
 ##
     DON'T EDIT BELOW THIS LINE UNLESS YOU KNOW WHAT YOU'RE DOING
@@ -90,55 +98,56 @@ func clean_title(value)
 end
 
 # replace characters with XIV block letters
-func replace_chars(title)
-    title = title | string.replace "A" ""
-    title = title | string.replace "B" ""
-    title = title | string.replace "C" ""
-    title = title | string.replace "D" ""
-    title = title | string.replace "E" ""
-    title = title | string.replace "F" ""
-    title = title | string.replace "G" ""
-    title = title | string.replace "H" ""
-    title = title | string.replace "I" ""
-    title = title | string.replace "J" ""
-    title = title | string.replace "K" ""
-    title = title | string.replace "L" ""
-    title = title | string.replace "M" ""
-    title = title | string.replace "N" ""
-    title = title | string.replace "O" ""
-    title = title | string.replace "P" ""
-    title = title | string.replace "Q" ""
-    title = title | string.replace "R" ""
-    title = title | string.replace "S" ""
-    title = title | string.replace "T" ""
-    title = title | string.replace "U" ""
-    title = title | string.replace "V" ""
-    title = title | string.replace "W" ""
-    title = title | string.replace "X" ""
-    title = title | string.replace "Y" ""
-    title = title | string.replace "Z" ""
-    title = title | string.replace "0" ""
-    title = title | string.replace "1" ""
-    title = title | string.replace "2" ""
-    title = title | string.replace "3" ""
-    title = title | string.replace "4" ""
-    title = title | string.replace "5" ""
-    title = title | string.replace "6" ""
-    title = title | string.replace "7" ""
-    title = title | string.replace "8" ""
-    title = title | string.replace "9" ""
-    title = title | string.replace " " "■"
+# char_replace_type set in config, one of "none" "block" "mono"
+func replace_chars(title, type, block_spaces)
 
-    ret title
+    if type == "none"
+        ret title
+    end
+
+    # em space _ _ # displays in chat but not in honorific
+    # ideographic space _　_  # slightly too long for monospace, appears equal in chat
+    mono_alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz 0123456789"
+    mono_chars = "ＡＢＣＤＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺａｂｃｄｅｆｇｈｉｊｋｌｍｎｏｐｑｒｓｔｕｖｗｘｙｚ　０１２３４５６７８９"
+    block_alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ 0123456789?"
+    block_chars = "　"
+
+    if type == "mono"
+        alphabet = mono_alphabet
+        chars = mono_chars
+    else if type == "block"
+        alphabet = block_alphabet
+        chars = block_chars
+        title = string.upcase title
+        if block_spaces
+            title = title | string.replace " " "■"
+        end
+    end
+
+    # title = clean_title(title)
+
+    # perform the character replacement
+    result = ""
+    for char in title
+        index = alphabet | string.index_of char
+        if index >= 0
+            newchar = chars | string.slice index 1
+            result = result + newchar
+        # else
+        #    result = result + char
+        end
+    end
+
+    ret result
 end
 
 
 # generate title and artist strings with spacing to separate cycles
 spacing = "  "
-artist = replace_chars(clean_title((ActivityArtist  | string.upcase) + spacing))
-track = replace_chars(clean_title((ActivityTrackTitle  | string.upcase) + spacing))
+artist = replace_chars(ActivityArtist + spacing, char_replace_type, block_spaces)
+track = replace_chars(ActivityTrackTitle + spacing, char_replace_type, block_spaces)
 if infinite_scroll
-    single_title = artist + track + replace_chars(spacing)
+    single_title = artist + track + replace_chars(spacing, char_replace_type, block_spaces)
     full_title = single_title + single_title + single_title
 end
 
