@@ -248,22 +248,22 @@ if infinite_scroll
 
 else
     # get number of segments for each
-    artist_segs = segments(artist, length, dots)
-    track_segs = segments(track, length, dots)
+    artist_segs = segments(artist, max_chars, elipses)
+    track_segs = segments(track, max_chars, elipses)
 
     # calculate how long artist and track will be displayed based on frame count
     artist_secs = artist_segs * fair(update_interval, artist_segs)
     track_secs = track_segs * fair(update_interval, track_segs)
-    total_secs = artist_secs + track_secs
+    total_display_secs = artist_secs + track_secs
 
     # main display logic
-    secs = safety_total_seconds % total_secs
+    secs = safety_total_seconds % total_display_secs
     if (secs < artist_secs)
         segment = (secs) / fair(update_interval, artist_segs) | math.ceil
-        scroll_title = get_segment(artist, segment, artist_segs, length, dots)
+        scroll_title = get_segment(artist, segment, artist_segs, max_chars, elipses)
     else
         segment = (secs - artist_secs) / fair(update_interval, track_segs) | math.ceil
-        scroll_title = get_segment(track, segment, track_segs, length, dots)
+        scroll_title = get_segment(track, segment, track_segs, max_chars, elipses)
     end
 end
 
