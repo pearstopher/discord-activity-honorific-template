@@ -215,7 +215,8 @@ func get_interval(str, segments)
     if segments == 1
         # display true single frame for time specified in config
         if (! c.padding) || (len == c.max_chars)
-            interval = c.static_interval
+            # round to nearest multiple of update interval to match timers
+            interval = c.static_interval - c.static_interval % c.update_interval
         # extend interval for 1-segment bounce
         else
             interval = interval * 3
