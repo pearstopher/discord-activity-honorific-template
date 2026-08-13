@@ -177,7 +177,7 @@ func get_segment(str, seg, segmax, maxlen, dots, padding, space, sec, maxsec)
                 pad_with = pad_with + space
             end
             interval = (maxsec / 3) | math.floor
-            if (sec > interval) && (sec < interval * 2)
+            if (sec >= interval) && (sec < interval * 2)
                 ret pad_with + str
             else
                 ret str + pad_with
