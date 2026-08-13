@@ -192,14 +192,6 @@ func get_segment(str, seg, segmax, space, sec, maxsec)
     end
 end
 
-# function to correctly resize string
-func resize(str, len, elipses)
-    if (str | string.size > len)
-        str = str | string.slice 0 (len - 1)
-        str = str | string.append elipses
-    end
-    ret str
-end
 
 # function to extend length that a single frame title is displayed
 func fair(update_interval, segments, padding, str, max_chars)
