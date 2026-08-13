@@ -5,7 +5,7 @@
 
 # choose the maximum number of characters of song info to display
 max_chars = 30
-# honorific supports a max of 32 total
+# *honorific supports a max of 32 total
 
 
 # choose text to display to the ♪left and right♪ of the song info
@@ -14,19 +14,19 @@ post_display = "♪"
 
 # or show progress timers for each song instead
 display_timers = false
-# adds 10 characters when true (M:SS_ and _M:SS)
+# *adds 10 characters when true (M:SS_ and _M:SS)
 
 
 # choose how often to update the title in seconds
 update_interval = 3
-# seems to work as low as 2 before it breaks for synced pairs
-# tested with Lightless
+# *seems to work as low as 2 before it breaks for synced pairs
+# *tested with Lightless
 
 
 # choose between infinite scroll and alternate display
 infinite_scroll = false
-# if true, display scrolls repeating artist and track name indefinitely
-# if false, alternates between artist and track names individually
+# *if true, display scrolls repeating artist and track name indefinitely
+# *if false, alternates between artist and track names individually
 
 # (infinite scroll only) choose how many characters to scroll at a time
 chars_at_a_time = 2
