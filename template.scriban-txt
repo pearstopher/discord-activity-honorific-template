@@ -194,7 +194,7 @@ end
 
 
 # function to extend length that a single frame title is displayed
-func fair(update_interval, segments, padding, str, max_chars)
+func extend_interval(str, segments)
     len = str | string.size
 
     if segments == 1
@@ -267,20 +267,20 @@ else
     track_segs = segments(track)
 
     # calculate how long artist and track will be displayed based on frame count
-    artist_secs = artist_segs * fair(update_interval, artist_segs, padding, artist, max_chars)
-    track_secs = track_segs * fair(update_interval, track_segs, padding, track, max_chars)
+    artist_interval = extend_interval(artist, artist_segs)
+    artist_secs = artist_segs * artist_interval
+    track_interval = extend_interval(track, track_segs)
+    track_secs = track_segs * track_interval
     total_display_secs = artist_secs + track_secs
 
     # main display logic
     secs = safety_total_seconds % total_display_secs
     if (secs < artist_secs)
-        fair_artist_secs = fair(update_interval, artist_segs, padding, artist, max_chars)
-        segment = secs / fair_artist_secs | math.ceil
+        segment = secs / artist_interval | math.ceil
         scroll_title = get_segment(artist, segment, artist_segs, sp, secs, artist_secs)
     else
         secs = secs - artist_secs
-        fair_track_secs = fair(update_interval, track_segs, padding, track, max_chars)
-        segment = secs / fair_track_secs  | math.ceil
+        segment = secs / track_interval  | math.ceil
         scroll_title = get_segment(track, segment, track_segs, sp, secs, track_secs)
     end
 end
