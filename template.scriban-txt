@@ -162,7 +162,7 @@ func segments(str)
 end
 
 # (alternate display) function to get the correct segment text
-func get_segment(str, seg, segmax, max_chars, elipses, padding, space, sec, maxsec)
+func get_segment(str, seg, segmax, space, sec, maxsec)
     len = str | string.size
     dotlen = elipses | string.size
 
@@ -284,12 +284,12 @@ else
     if (secs < artist_secs)
         fair_artist_secs = fair(update_interval, artist_segs, padding, artist, max_chars)
         segment = secs / fair_artist_secs | math.ceil
-        scroll_title = get_segment(artist, segment, artist_segs, max_chars, elipses, padding, sp, secs, artist_secs)
+        scroll_title = get_segment(artist, segment, artist_segs, sp, secs, artist_secs)
     else
         secs = secs - artist_secs
         fair_track_secs = fair(update_interval, track_segs, padding, track, max_chars)
         segment = secs / fair_track_secs  | math.ceil
-        scroll_title = get_segment(track, segment, track_segs, max_chars, elipses, padding, sp, secs, track_secs)
+        scroll_title = get_segment(track, segment, track_segs, sp, secs, track_secs)
     end
 end
 
