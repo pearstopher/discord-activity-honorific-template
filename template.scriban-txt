@@ -197,18 +197,19 @@ end
 # function to extend length that a single frame title is displayed
 func extend_interval(str, segments)
     len = str | string.size
+    extended_interval = c.update_interval
 
     if segments == 1
         # display true single frame for twice as long
         if (! c.padding) || (len == c.max_chars)
-            c.update_interval = c.update_interval * 2
+            extended_interval = extended_interval * 2
         # display padded single frame for 3x as long
         # (time to bounce L - R - L)
         else
-            c.update_interval = c.update_interval * 3
+            extended_interval = extended_interval * 3
         end
     end
-    ret c.update_interval
+    ret extended_interval
 end
 
 ##
@@ -277,11 +278,11 @@ else
     # main display logic
     secs = safety_total_seconds % total_display_secs
     if (secs < artist_secs)
-        segment = secs / artist_interval | math.ceil
+        segment = secs / artist_interval | math.floor + 1
         scroll_title = get_segment(artist, segment, artist_segs, sp, secs, artist_secs)
     else
         secs = secs - artist_secs
-        segment = secs / track_interval  | math.ceil
+        segment = secs / track_interval  | math.floor + 1
         scroll_title = get_segment(track, segment, track_segs, sp, secs, track_secs)
     end
 end
