@@ -1,8 +1,19 @@
 {{-
 ##
+    THE BEST EVER DISCORD ACTIVITY HONORIFIC TEMPLATE OUT OF DENTON
+    https://github.com/pearstopher/discord-activity-honorific-template
+
+    The default configuration functions identically to "Spotify 2"
+
+    by pearstopher@discord / Ane Mora@Famfrit
+##
+
+
+config = {
+##
     CONFIGURATION
 ##
-config = {
+
 
 # choose the maximum number of characters of song info to display
 max_chars: 30,
@@ -21,13 +32,19 @@ display_timers: false,
 # *adds 10 characters when true (M:SS_ and _M:SS)
 
 
+# choose a custom message to display at the start of each cycle
+enable_message: true,
+custom_message: "Listening to Spotify",
+
+
 # choose how often to update scrolling/bouncing text in seconds
 update_interval: 3,
 # *seems to work as low as 2s before it breaks for synced pairs
 # *tested with Lightless
 
 # choose how often to update text that fits without padding
-static_interval: 6,
+static_interval: update_interval*3,
+# *must be a multiple of update_interval if using timers
 
 
 # choose between infinite scroll and alternate display
@@ -41,7 +58,7 @@ chars_at_a_time: 2,
 # (alternate only) choose to pad short text with whitespace up to max_width
 padding: false,
 
-# (alternate only) choose what type of c.elipses to display ("...", "", "…", "")
+# (alternate only) choose what type of elipses to display ("...", "", "…", "")
 elipses: "...",
 
 
@@ -61,15 +78,15 @@ char_replace_type: "none",
 block_spaces: false
 
 
-}
-c = config
+
 ##
     DON'T EDIT BELOW THIS LINE UNLESS YOU KNOW WHAT YOU'RE DOING
 
     In which case, I'd love to see a pull request with your additions!
     https://github.com/pearstopher/discord-activity-honorific-template
 ##
-
+}
+c = config
 
 
 
@@ -110,15 +127,15 @@ end
 func replace_chars(title)
 
     alphabet = "0123456789 ABCDEFGHIJKLMNOPQRSTUVWXYZ?abcdefghijklmnopqrstuvwxyz"
-    mono_chars = "０１２３４５６７８９　ＡＢＣＤＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺ？ａｂｃｄｅｆｇｈｉｊｋｌｍｎｏｐｑｒｓｔｕｖｗｘｙｚ"
-    block_chars = "　"
+    mono = "０１２３４５６７８９　ＡＢＣＤＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺ？ａｂｃｄｅｆｇｈｉｊｋｌｍｎｏｐｑｒｓｔｕｖｗｘｙｚ"
+    block = "　"
 
     if c.char_replace_type == "none"
         ret title
     else if c.char_replace_type == "mono"
-        chars = mono_chars
+        chars = mono
     else if c.char_replace_type == "block"
-        chars = block_chars
+        chars = block
         title = string.upcase title
         if c.block_spaces
             title = title | string.replace " " "■"
@@ -226,15 +243,6 @@ end
 ##
 
 
-# generate artist and track title strings
-space = replace_chars(" ")
-artist = replace_chars(ActivityArtist)
-track = replace_chars(ActivityTrackTitle)
-if c.infinite_scroll
-    single_title = artist + space*2 + track + space*3
-    scroll_title = single_title * 3
-end
-
 
 # create a custom clock to disallow updates with < c.update_interval seconds left
 # this prevents updates being sent too close to a refresh from a new song starting
@@ -265,15 +273,29 @@ if c.display_timers
     c.post_display = display_total
 end
 
+# generate artist and track title strings
+space = replace_chars(" ")
+message = replace_chars(c.custom_message)
+artist = replace_chars(ActivityArtist)
+track = replace_chars(ActivityTrackTitle)
+
 
 # generate final scroll text
 if c.infinite_scroll
+    single_title =  artist + space*2 + track + space*3
+    if c.enable_message
+        single_title = c.custom_message + space*3 + single_title
+    end
+    scroll_title = single_title * 3
     cycle_length = single_title | string.size
     position = (((safety_total_seconds / c.update_interval) | math.floor) * c.chars_at_a_time) % cycle_length
     output = scroll_title | string.slice position c.max_chars
 
 # generate final alternate text
 else
+    message_segs = seg_count(message)
+    message_interval = get_interval(message, message_segs)
+    message_secs = c.enable_message ? get_secs(message_segs, message_interval) : 0
     artist_segs = seg_count(artist)
     artist_interval = get_interval(artist, artist_segs)
     artist_secs = get_secs(artist_segs, artist_interval)
@@ -281,12 +303,16 @@ else
     track_interval = get_interval(track, track_segs)
     track_secs = get_secs(track_segs, track_interval)
 
-    sec = safety_total_seconds % (artist_secs + track_secs)
-    if (sec < artist_secs)
+    sec = safety_total_seconds % (message_secs + artist_secs + track_secs)
+    if (sec < message_secs)
+        seg = sec / message_interval | math.floor + 1
+        output = get_segment(message, space, seg, message_segs, sec, message_secs)
+    else if (sec < message_secs + artist_secs)
+        sec = sec - message_secs
         seg = sec / artist_interval | math.floor + 1
         output = get_segment(artist, space, seg, artist_segs, sec, artist_secs)
     else
-        sec = sec - artist_secs
+        sec = sec - message_secs - artist_secs
         seg = sec / track_interval  | math.floor + 1
         output = get_segment(track, space, seg, track_segs, sec, track_secs)
     end
