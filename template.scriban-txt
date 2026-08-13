@@ -5,13 +5,14 @@
 config = {
 
 # choose the maximum number of characters of song info to display
-max_chars: 30,
+max_chars: 22,
 # *honorific supports a max of 32 total
 
 
 # choose text to display to the ♪left and right♪ of the song info
 pre_display: "♪",
 post_display: "♪",
+# * not included in max_chars
 
 # or show progress timers for each song instead
 display_timers: false,
