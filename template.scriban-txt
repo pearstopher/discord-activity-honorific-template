@@ -5,8 +5,9 @@
 config = {
 
 # choose the maximum number of characters of song info to display
-max_chars: 22,
+max_chars: 20,
 # *honorific supports a max of 32 total
+# *20 is a safe max
 
 
 # choose text to display to the ♪left and right♪ of the song info
@@ -16,7 +17,7 @@ post_display: "♪",
 
 # or show progress timers for each song instead
 display_timers: false,
-# *adds 10 characters when true (M:SS_ and _M:SS)
+# *adds 10-12 characters when true (MM:SS_ and _MM:SS)
 
 
 # choose how often to update the title in seconds
@@ -183,7 +184,7 @@ func get_segment(str, seg, segmax, space, sec, maxsec)
                 ret str + pad_with
             end
         end
-    else if seg == 1
+    else if seg == 1 || seg > segmax
         ret str | string.slice 0 (c.max_chars - dotlen) | string.append c.elipses
     else if seg == segmax
         ret c.elipses | string.append (str | string.slice (len - (c.max_chars - dotlen)) len)
@@ -273,6 +274,9 @@ else
     artist_secs = artist_segs * artist_interval
     track_interval = extend_interval(track, track_segs)
     track_secs = track_segs * track_interval
+    if track_segs == 2
+        track_secs = track_secs + c.update_interval
+    end
     total_display_secs = artist_secs + track_secs
 
     # main display logic
