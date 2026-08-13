@@ -2,46 +2,46 @@
 ##
     CONFIGURATION
 ##
-
+config = {
 
 # choose the maximum number of characters of song info to display
-max_chars = 30
+max_chars: 30,
 # *honorific supports a max of 32 total
 
 
 # choose text to display to the ♪left and right♪ of the song info
-pre_display = "♪"
-post_display = "♪"
+pre_display: "♪",
+post_display: "♪",
 
 # or show progress timers for each song instead
-display_timers = false
+display_timers: false,
 # *adds 10 characters when true (M:SS_ and _M:SS)
 
 
 # choose how often to update the title in seconds
-update_interval = 3
+update_interval: 3,
 # *seems to work as low as 2 before it breaks for synced pairs
 # *tested with Lightless
 
 
 # choose between infinite scroll and alternate display
-infinite_scroll = false
+infinite_scroll: false,
 # *if true, display scrolls repeating artist and track name indefinitely
 # *if false, alternates between artist and track names individually
 
 # (infinite scroll only) choose how many characters to scroll at a time
-chars_at_a_time = 2
+chars_at_a_time: 2,
 
 # (alternate only) choose to pad short names with whitespace up to max_width
-padding = true
+padding: true,
 
-# (alternate only) choose what type of elipses to display ("...", "", "…")
-elipses = "..."
+# (alternate only) choose what type of c.elipses to display ("...", "", "…")
+elipses: "...",
 # *supports multiple characters but not 0 currently, cannot set to empty ""
 
 
 # choose what type of character replacement you prefer if any
-char_replace_type = "none"
+char_replace_type: "none",
 # "none" =  PRO: standard font, supports all special characters
 #           CON: not fixed width, updates change title size
 #
@@ -53,17 +53,17 @@ char_replace_type = "none"
 #
 
 # (block text only) replace spaces with empty block ■ if true
-block_spaces = false
+block_spaces: false
 
 
-
+}
+c = config
 ##
     DON'T EDIT BELOW THIS LINE UNLESS YOU KNOW WHAT YOU'RE DOING
 
     In which case, I'd love to see a pull request with your additions!
     https://github.com/pearstopher/discord-activity-honorific-template
 ##
-
 
 
 
@@ -104,10 +104,10 @@ end
 
 
 # (all) replace characters with monospaced or XIV block letters
-# char_replace_type set in config, one of "none" "block" "mono"
+# c.char_replace_type set in config, one of "none" "block" "mono"
 func replace_chars(title)
 
-    if char_replace_type == "none"
+    if c.char_replace_type == "none"
         ret title
     end
 
@@ -116,14 +116,14 @@ func replace_chars(title)
     block_alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ 0123456789?"
     block_chars = "　"
 
-    if char_replace_type == "mono"
+    if c.char_replace_type == "mono"
         alphabet = mono_alphabet
         chars = mono_chars
-    else if char_replace_type == "block"
+    else if c.char_replace_type == "block"
         alphabet = block_alphabet
         chars = block_chars
         title = string.upcase title
-        if block_spaces
+        if c.block_spaces
             title = title | string.replace " " "■"
         end
     end
@@ -144,35 +144,35 @@ end
 # (alternate display) function to determine number of segments
 func segments(str)
     len = str | string.size
-    dotlen = elipses | string.size
+    dotlen = c.elipses | string.size
 
-    # 1 segment is up to max_chars characters
-    if len <= max_chars
+    # 1 segment is up to c.max_chars characters
+    if len <= c.max_chars
         ret 1
-    # 2 segments are up to max_chars - dotlen characters each
-    else if len <= 2*(max_chars - dotlen)
+    # 2 segments are up to c.max_chars - dotlen characters each
+    else if len <= 2*(c.max_chars - dotlen)
         ret 2
     # 3+ segments
-    # first and last are max_chars - dotlen
-    # middle segments are max_chars - 2dotlen
+    # first and last are c.max_chars - dotlen
+    # middle segments are c.max_chars - 2dotlen
     else
         # subtract the first and last segments, count the middle segments, combine the two
-        ret (len - 2*(max_chars - dotlen)) / (max_chars - 2*dotlen) | math.ceil + 2
+        ret (len - 2*(c.max_chars - dotlen)) / (c.max_chars - 2*dotlen) | math.ceil + 2
     end
 end
 
 # (alternate display) function to get the correct segment text
 func get_segment(str, seg, segmax, space, sec, maxsec)
     len = str | string.size
-    dotlen = elipses | string.size
+    dotlen = c.elipses | string.size
 
     if segmax == 1
-        if (! padding) || (len == max_chars)
+        if (! c.padding) || (len == c.max_chars)
             ret str
         else
             # create before/after padding bounce
             pad_with = ""
-            for i in 0..(max_chars - len - 1)
+            for i in 0..(c.max_chars - len - 1)
                 pad_with = pad_with + space
             end
             interval = (maxsec / 3) | math.floor
@@ -183,12 +183,12 @@ func get_segment(str, seg, segmax, space, sec, maxsec)
             end
         end
     else if seg == 1
-        ret str | string.slice 0 (max_chars - dotlen) | string.append elipses
+        ret str | string.slice 0 (c.max_chars - dotlen) | string.append c.elipses
     else if seg == segmax
-        ret elipses | string.append (str | string.slice (len - (max_chars - dotlen)) len)
+        ret c.elipses | string.append (str | string.slice (len - (c.max_chars - dotlen)) len)
     else
         start = len / segmax | math.floor * (seg - 1)
-        ret elipses | string.append (str | string.slice start (max_chars - 2*dotlen)) | string.append elipses
+        ret c.elipses | string.append (str | string.slice start (c.max_chars - 2*dotlen)) | string.append c.elipses
     end
 end
 
@@ -199,15 +199,15 @@ func extend_interval(str, segments)
 
     if segments == 1
         # display true single frame for twice as long
-        if (! padding) || (len == max_chars)
-            update_interval = update_interval * 2
+        if (! c.padding) || (len == c.max_chars)
+            c.update_interval = c.update_interval * 2
         # display padded single frame for 3x as long
         # (time to bounce L - R - L)
         else
-            update_interval = update_interval * 3
+            c.update_interval = c.update_interval * 3
         end
     end
-    ret update_interval
+    ret c.update_interval
 end
 
 ##
@@ -219,16 +219,16 @@ end
 sp = replace_chars(" ")
 artist = replace_chars(ActivityArtist)
 track = replace_chars(ActivityTrackTitle)
-if infinite_scroll
+if c.infinite_scroll
     single_title = artist + sp + sp + track + sp + sp + sp
     full_title = single_title + single_title + single_title
 end
 
 
-# create a custom clock to disallow updates with < update_interval seconds left
+# create a custom clock to disallow updates with < c.update_interval seconds left
 # this prevents updates being sent too fast if the scroll updates immediately before a new song
 safety_total_seconds = ActivityElapsedTotalSeconds | math.floor
-safety_max = ActivityDurationTotalSeconds - update_interval
+safety_max = ActivityDurationTotalSeconds - c.update_interval
 if (safety_total_seconds > safety_max)
     safety_total_seconds = safety_max
 end
@@ -239,7 +239,7 @@ safety_seconds = safety_total_seconds % 60
 # set up track timers in the format M:SS
 # round seconds to the closest update interval
 # offset by 1 so it starts at 0:01 instead of 0:00
-elapsed_seconds = (safety_seconds - (safety_seconds % update_interval))  + 1
+elapsed_seconds = (safety_seconds - (safety_seconds % c.update_interval))  + 1
 if elapsed_seconds < 10
     elapsed_seconds = "0" + elapsed_seconds
 end
@@ -253,13 +253,13 @@ time_total = time_total_minutes | string.append ":" | string.append time_total_s
 
 
 # ready to generate the actual text to display
-if infinite_scroll
+if c.infinite_scroll
 
     # set up infinite scrolling
     scroll_title = full_title
     cycle_length = single_title | string.size
-    position = (((safety_total_seconds / update_interval) | math.floor) * chars_at_a_time) % cycle_length
-    scroll_title = scroll_title | string.slice position max_chars
+    position = (((safety_total_seconds / c.update_interval) | math.floor) * c.chars_at_a_time) % cycle_length
+    scroll_title = scroll_title | string.slice position c.max_chars
 
 else
     # get number of segments for each
@@ -286,10 +286,10 @@ else
 end
 
 # generate final output
-if display_timers
+if c.display_timers
     output = time_elapsed + " " + scroll_title + " " + time_total
 else
-    output = pre_display + scroll_title + post_display
+    output = c.pre_display + scroll_title + c.post_display
 end
 
 output | string.truncate 32
