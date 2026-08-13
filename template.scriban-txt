@@ -3,38 +3,53 @@
     CONFIGURATION
 ##
 
-# length of scrolling characters
-max_chars = 13
-# honorific supports a max of 32
+# choose the maximum number of characters of song info to display
+max_chars = 30
+# honorific supports a max of 32 total
 
-# display song timers
+
+# choose text to display to the left and right of the song info
+pre_display = "♪"
+post_display = "♪"
+
+# or show progress timers for each song instead
 display_timers = false
-# +10 to length when true (M:SS_ and _M:SS)
-# +2 to length when false (♪ and ♪)
+# adds 10 characters when true (M:SS_ and _M:SS)
 
-# update the title every X seconds
+
+# choose how often to update the title in seconds
 update_interval = 3
 # seems to work as low as 2 before it breaks for synced pairs
 # tested with Lightless
 
-# scroll by X characters at a time
+
+# choose between infinite scroll and alternate display
+infinite_scroll = false
+# if true, display scrolls repeating artist and track name indefinitely
+# if false, alternates between artist and track names individually
+
+# (infinite scroll only) choose how many characters to scroll at a time
 chars_at_a_time = 2
 
-# enable infinite scroll
-infinite_scroll = true
-# if true, repeats artist and track name infinitely
-# if false, alternates between artist and track names
-
-# switch between artist and track every X updates
+# (alternate only) choose how long to scroll artist/track name before switching
 scroll_updates = 7
 
-# type of character replacement
-char_replace_type = "block"
-# "none" = supports all characters, not fixed width
-# "mono" = monospaced letters (upper-, lowercase, numbers, spaces slightly too wide)
-# "block" = XIV block letters (uppercase, numbers) true fixed width
+
+# choose what type of character replacement you prefer if any
+char_replace_type = "none"
+# "none" =  PRO: standard font, supports all special characters
+#           CON: not fixed width, updates change title size
+#
+# "block" = PRO: true fixed width display
+#           CON: only supports uppercase letters and numbers
+#
+# "mono" =  PRO: supports upper- and lower-case letters
+#           CON: not truly monospace as spaces are slightly too wide
+#
+
+# (block text only) replace spaces with empty block ■ if true
 block_spaces = false
-# for block text, replaces spaces with empty block ■ if true
+
 
 
 ##
@@ -43,6 +58,7 @@ block_spaces = false
     In which case, I'd love to see a pull request with your additions!
     https://github.com/pearstopher/discord-activity-honorific-template
 ##
+
 
 
 
@@ -193,10 +209,10 @@ end
 
 # generate final output
 if display_timers
-    output = time_elapsed + " " + scroll_title + " " + time_total | string.truncate 32
+    output = time_elapsed + " " + scroll_title + " " + time_total
 else
-    output = "♪" + scroll_title + "♪" | string.truncate 32
+    output = pre_display + scroll_title + post_display
 end
 
-output
+output | string.truncate 32
 -}}
