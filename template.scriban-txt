@@ -10,7 +10,7 @@ max_chars = 10
 # display song timers
 display_timers = true
 # +10 to length when true (M:SS_ and _M:SS)
-# +4 to length when false (♪_ and _♪)
+# +2 to length when false (♪ and ♪)
 
 # update the title every X seconds
 update_interval = 3
@@ -195,7 +195,7 @@ end
 if display_timers
     output = time_elapsed + " " + scroll_title + " " + time_total | string.truncate 32
 else
-    output = "♪ " + scroll_title + " ♪" | string.truncate 32
+    output = "♪" + scroll_title + "♪" | string.truncate 32
 end
 
 output
