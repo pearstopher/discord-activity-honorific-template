@@ -7,7 +7,8 @@ config = {
 # choose the maximum number of characters of song info to display
 max_chars: 20,
 # *honorific supports a max of 32 total
-# *20 is a safe max
+# *20 is a safe max with timers on and occasional 10+ minute songs
+# *30 is a safe max with the default pre- and post-display ♪ chars
 
 
 # choose text to display to the ♪left and right♪ of the song info
@@ -17,7 +18,7 @@ post_display: "♪",
 
 # or show progress timers for each song instead
 display_timers: false,
-# *adds 10-12 characters when true (MM:SS_ and _MM:SS)
+# *adds 10 characters when true (M:SS_ and _M:SS)
 
 
 # choose how often to update the title in seconds
