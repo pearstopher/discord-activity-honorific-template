@@ -32,6 +32,9 @@ display_timers: false,
 # *adds 10 characters when true (M:SS_ and _M:SS)
 
 
+# choose to display all artists or just the first artist name
+all_artists: true,
+
 # choose a custom message to display at the start of each cycle
 enable_message: false,
 custom_message: "Listening to Spotify",
@@ -102,6 +105,11 @@ if discord
     ActivityElapsedTotalSeconds = Activity.Elapsed.TotalSeconds
     ActivityDurationTotalSeconds = Activity.Duration.TotalSeconds | math.floor
     ActivityArtist = Activity.Artists[0]
+    if c.all_artists
+        for artist in Activity.Artists offset: 1
+            ActivityArtist = ActivityArtist + ", " + artist
+        end
+    end
     ActivityTrackTitle = Activity.TrackTitle
 else
     # Context.SecsElapsed does not match Activity.Elapsed and is less reliable
@@ -110,12 +118,16 @@ else
     ActivityElapsedTotalSeconds = Context.SecsElapsed
     ActivityDurationTotalSeconds = Activity.DurationMs / 1000 | math.floor
     ActivityArtist = Activity.Artists[0].Name
+    if c.all_artists
+        for artist in Activity.Artists offset: 1
+            ActivityArtist = ActivityArtist + ", " + artist.Name
+        end
+    end
     ActivityTrackTitle = Activity.Name
 end
-# shared template variables can go here
-# ActivityShared = Activity.Shared
 
 # No template variables below this line
+
 
 
 ##
