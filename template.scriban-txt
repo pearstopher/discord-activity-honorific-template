@@ -33,7 +33,7 @@ display_timers: false,
 
 
 # choose a custom message to display at the start of each cycle
-enable_message: true,
+enable_message: false,
 custom_message: "Listening to Spotify",
 
 
@@ -43,7 +43,7 @@ update_interval: 3,
 # *tested with Lightless
 
 # choose how often to update text that fits without padding
-static_interval: update_interval*3,
+static_interval: 9,
 # *must be a multiple of update_interval if using timers
 
 
