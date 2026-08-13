@@ -3,6 +3,7 @@
     CONFIGURATION
 ##
 
+
 # choose the maximum number of characters of song info to display
 max_chars = 30
 # *honorific supports a max of 32 total
@@ -104,23 +105,21 @@ end
 
 # (all) replace characters with monospaced or XIV block letters
 # char_replace_type set in config, one of "none" "block" "mono"
-func replace_chars(title, type, block_spaces)
+func replace_chars(title)
 
-    if type == "none"
+    if char_replace_type == "none"
         ret title
     end
 
-    # em space _ _ # displays in chat but not in honorific
-    # ideographic space _　_  # slightly too long for monospace, appears equal in chat
     mono_alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz 0123456789"
     mono_chars = "ＡＢＣＤＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺａｂｃｄｅｆｇｈｉｊｋｌｍｎｏｐｑｒｓｔｕｖｗｘｙｚ　０１２３４５６７８９"
     block_alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ 0123456789?"
     block_chars = "　"
 
-    if type == "mono"
+    if char_replace_type == "mono"
         alphabet = mono_alphabet
         chars = mono_chars
-    else if type == "block"
+    else if char_replace_type == "block"
         alphabet = block_alphabet
         chars = block_chars
         title = string.upcase title
@@ -143,37 +142,37 @@ func replace_chars(title, type, block_spaces)
 end
 
 # (alternate display) function to determine number of segments
-func segments(str, maxlen, dots)
+func segments(str)
     len = str | string.size
-    dotlen = dots | string.size
+    dotlen = elipses | string.size
 
-    # 1 segment is up to maxlen characters
-    if len <= maxlen
+    # 1 segment is up to max_chars characters
+    if len <= max_chars
         ret 1
-    # 2 segments are up to maxlen - dotlen characters each
-    else if len <= 2*(maxlen - dotlen)
+    # 2 segments are up to max_chars - dotlen characters each
+    else if len <= 2*(max_chars - dotlen)
         ret 2
     # 3+ segments
-    # first and last are maxlen - dotlen
-    # middle segments are maxlen - 2dotlen
+    # first and last are max_chars - dotlen
+    # middle segments are max_chars - 2dotlen
     else
         # subtract the first and last segments, count the middle segments, combine the two
-        ret (len - 2*(maxlen - dotlen)) / (maxlen - 2*dotlen) | math.ceil + 2
+        ret (len - 2*(max_chars - dotlen)) / (max_chars - 2*dotlen) | math.ceil + 2
     end
 end
 
 # (alternate display) function to get the correct segment text
-func get_segment(str, seg, segmax, maxlen, dots, padding, space, sec, maxsec)
+func get_segment(str, seg, segmax, max_chars, elipses, padding, space, sec, maxsec)
     len = str | string.size
-    dotlen = dots | string.size
+    dotlen = elipses | string.size
 
     if segmax == 1
-        if (! padding) || (len == maxlen)
+        if (! padding) || (len == max_chars)
             ret str
         else
             # create before/after padding bounce
             pad_with = ""
-            for i in 0..(maxlen - len - 1)
+            for i in 0..(max_chars - len - 1)
                 pad_with = pad_with + space
             end
             interval = (maxsec / 3) | math.floor
@@ -184,31 +183,31 @@ func get_segment(str, seg, segmax, maxlen, dots, padding, space, sec, maxsec)
             end
         end
     else if seg == 1
-        ret str | string.slice 0 (maxlen - dotlen) | string.append dots
+        ret str | string.slice 0 (max_chars - dotlen) | string.append elipses
     else if seg == segmax
-        ret dots | string.append (str | string.slice (len - (maxlen - dotlen)) len)
+        ret elipses | string.append (str | string.slice (len - (max_chars - dotlen)) len)
     else
         start = len / segmax | math.floor * (seg - 1)
-        ret dots | string.append (str | string.slice start (maxlen - 2*dotlen)) | string.append dots
+        ret elipses | string.append (str | string.slice start (max_chars - 2*dotlen)) | string.append elipses
     end
 end
 
 # function to correctly resize string
-func resize(str, len, dots)
+func resize(str, len, elipses)
     if (str | string.size > len)
         str = str | string.slice 0 (len - 1)
-        str = str | string.append dots
+        str = str | string.append elipses
     end
     ret str
 end
 
 # function to extend length that a single frame title is displayed
-func fair(update_interval, segments, padding, str, maxlen)
+func fair(update_interval, segments, padding, str, max_chars)
     len = str | string.size
 
     if segments == 1
         # display true single frame for twice as long
-        if (! padding) || (len == maxlen)
+        if (! padding) || (len == max_chars)
             update_interval = update_interval * 2
         # display padded single frame for 3x as long
         # (time to bounce L - R - L)
@@ -225,9 +224,9 @@ end
 
 
 # generate title and artist strings with spacing to separate cycles
-sp = replace_chars(" ", char_replace_type, block_spaces)
-artist = replace_chars(ActivityArtist, char_replace_type, block_spaces)
-track = replace_chars(ActivityTrackTitle, char_replace_type, block_spaces)
+sp = replace_chars(" ")
+artist = replace_chars(ActivityArtist)
+track = replace_chars(ActivityTrackTitle)
 if infinite_scroll
     single_title = artist + sp + sp + track + sp + sp + sp
     full_title = single_title + single_title + single_title
@@ -272,8 +271,8 @@ if infinite_scroll
 
 else
     # get number of segments for each
-    artist_segs = segments(artist, max_chars, elipses)
-    track_segs = segments(track, max_chars, elipses)
+    artist_segs = segments(artist)
+    track_segs = segments(track)
 
     # calculate how long artist and track will be displayed based on frame count
     artist_secs = artist_segs * fair(update_interval, artist_segs, padding, artist, max_chars)
