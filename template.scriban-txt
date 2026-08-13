@@ -34,8 +34,9 @@ chars_at_a_time = 2
 # (alternate only) choose to pad short names with whitespace up to max_width
 padding = false
 
-# (alternate only) choose what type of elipses to display ("...", "")
+# (alternate only) choose what type of elipses to display ("...", "", "…")
 elipses = "..."
+# *supports multiple characters but not 0 currently, cannot set to empty ""
 
 
 # choose what type of character replacement you prefer if any
