@@ -5,7 +5,7 @@
 config = {
 
 # choose the maximum number of characters of song info to display
-max_chars: 20,
+max_chars: 30,
 # *honorific supports a max of 32 total
 # *20 is a safe max with timers on and occasional 10+ minute songs
 # *30 is a safe max with the default pre- and post-display ♪ chars
@@ -21,10 +21,14 @@ display_timers: false,
 # *adds 10 characters when true (M:SS_ and _M:SS)
 
 
-# choose how often to update the title in seconds
+# choose how often to update scrolling/bouncing text in seconds
 update_interval: 3,
-# *seems to work as low as 2 before it breaks for synced pairs
+# *seems to work as low as 2s before it breaks for synced pairs
 # *tested with Lightless
+
+# choose how often to update text that fits without padding
+static_interval: 6,
+
 
 
 # choose between infinite scroll and alternate display
@@ -35,8 +39,8 @@ infinite_scroll: false,
 # (infinite scroll only) choose how many characters to scroll at a time
 chars_at_a_time: 2,
 
-# (alternate only) choose to pad short names with whitespace up to max_width
-padding: true,
+# (alternate only) choose to pad short text with whitespace up to max_width
+padding: false,
 
 # (alternate only) choose what type of c.elipses to display ("...", "", "…")
 elipses: "...",
@@ -165,7 +169,7 @@ func segments(str)
 end
 
 # (alternate display) function to get the correct segment text
-func get_segment(str, seg, segmax, space, sec, maxsec)
+func get_segment(str, seg, segmax, space, sec, secmax)
     len = str | string.size
     dotlen = c.elipses | string.size
 
@@ -178,7 +182,7 @@ func get_segment(str, seg, segmax, space, sec, maxsec)
             for i in 0..(c.max_chars - len - 1)
                 pad_with = pad_with + space
             end
-            interval = (maxsec / 3) | math.floor
+            interval = (secmax / 3) | math.floor
             if (sec >= interval) && (sec < interval * 2)
                 ret pad_with + str
             else
@@ -197,21 +201,22 @@ end
 
 
 # function to extend length that a single frame title is displayed
-func extend_interval(str, segments)
+func get_interval(str, segments)
     len = str | string.size
-    extended_interval = c.update_interval
+    interval = c.update_interval
 
     if segments == 1
-        # display true single frame for twice as long
+        # display true single frame for time specified in config
         if (! c.padding) || (len == c.max_chars)
-            extended_interval = extended_interval * 2
-        # display padded single frame for 3x as long
-        # (time to bounce L - R - L)
+            interval = c.static_interval
+        # display padded single frame for 3 intervals to allow time to bounce (L R L)
+        # two-segment bounce is performed manually by extending total time by 1 interval
+        #  and then detecting a seg 3 when segmax is 2 in get_segment() above
         else
-            extended_interval = extended_interval * 3
+            interval = extended_interval * 3
         end
     end
-    ret extended_interval
+    ret interval
 end
 
 ##
@@ -271,9 +276,9 @@ else
     track_segs = segments(track)
 
     # calculate how long artist and track will be displayed based on frame count
-    artist_interval = extend_interval(artist, artist_segs)
+    artist_interval = get_interval(artist, artist_segs)
     artist_secs = artist_segs * artist_interval
-    track_interval = extend_interval(track, track_segs)
+    track_interval = get_interval(track, track_segs)
     track_secs = track_segs * track_interval
     if track_segs == 2
         track_secs = track_secs + c.update_interval
