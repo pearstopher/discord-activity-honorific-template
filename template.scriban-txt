@@ -81,11 +81,10 @@ char_replace_type: "none",
 block_spaces: false
 
 
-
 ##
     DON'T EDIT BELOW THIS LINE UNLESS YOU KNOW WHAT YOU'RE DOING
 
-    In which case, I'd love to see a pull request with your additions!
+    In which case I'd love to see a pull request with your additions
     https://github.com/pearstopher/discord-activity-honorific-template
 ##
 }
@@ -97,36 +96,25 @@ c = config
     CROSS PLUGIN COMPATIBILITY
 ##
 
+
 # determine which plugin is being used
 discord = ! Activity.Popularity
 
-# set plugin specific variables
-if discord
-    ActivityElapsedTotalSeconds = Activity.Elapsed.TotalSeconds
-    ActivityDurationTotalSeconds = Activity.Duration.TotalSeconds | math.floor
-    ActivityArtist = Activity.Artists[0]
-    if c.all_artists
-        for artist in Activity.Artists offset: 1
-            ActivityArtist = ActivityArtist + ", " + artist
-        end
+# get plugin specific template variables
+ActivityElapsedTotalSeconds = discord ? Activity.Elapsed.TotalSeconds : Context.SecsElapsed
+# Context.SecsElapsed does not match Activity.Elapsed and is less reliable
+# - It tracks the script context and is not related to Spotify at all
+# - It resets to 0 whenever you edit the template, if you pause a song, etc.
+ActivityDurationTotalSeconds = (discord ? Activity.Duration.TotalSeconds : Activity.DurationMs / 1000) | math.floor
+ActivityArtist = discord ? Activity.Artists[0] : Activity.Artists[0].Name
+if c.all_artists
+    for artist in Activity.Artists offset: 1
+        ActivityArtist = ActivityArtist + ", " + discord ? artist : artist.Name
     end
-    ActivityTrackTitle = Activity.TrackTitle
-else
-    # Context.SecsElapsed does not match Activity.Elapsed and is less reliable
-    # It tracks the script context and is not related to Spotify at all
-    # For example, if you pause a song and restart it the context restarts at 0
-    ActivityElapsedTotalSeconds = Context.SecsElapsed
-    ActivityDurationTotalSeconds = Activity.DurationMs / 1000 | math.floor
-    ActivityArtist = Activity.Artists[0].Name
-    if c.all_artists
-        for artist in Activity.Artists offset: 1
-            ActivityArtist = ActivityArtist + ", " + artist.Name
-        end
-    end
-    ActivityTrackTitle = Activity.Name
 end
+ActivityTrackTitle = discord ? Activity.TrackTitle : Activity.Name
 
-# No template variables below this line
+# no template variables below this line
 
 
 
@@ -165,6 +153,7 @@ func replace_chars(title)
     ret result
 end
 
+
 # (alternate display) function to determine number of segments
 func seg_count(str)
     len = str | string.size
@@ -179,6 +168,7 @@ func seg_count(str)
         ret (len - 2*(c.max_chars - dotlen)) / (c.max_chars - 2*dotlen) | math.ceil + 2
     end
 end
+
 
 # (alternate display) function to get the correct segment text
 func get_segment(str, space, seg, segmax, sec, secmax)
@@ -246,6 +236,10 @@ func get_secs(segs, interval)
     ret secs
 end
 
+# add padding to single digit seconds
+func pad_time(secs)
+    ret (secs < 10) ? ("0" + secs) : secs
+end
 
 ##
     END FUNCTIONS
@@ -260,20 +254,15 @@ safety_max = ActivityDurationTotalSeconds - c.update_interval
 if (safety_total_seconds > safety_max)
     safety_total_seconds = safety_max
 end
+# round time with math.floor (not math.ceil) to prevent timing errors
 safety_minutes = (safety_total_seconds / 60) | math.floor
 safety_seconds = safety_total_seconds % 60
-# mark unsafe time with display_ prefix below this line
-# round safe time with math.floor (not math.ceil) to prevent timing errors
 
 
-# set up track timers in the format MM:SS
-# round seconds to the closest update interval
-# offset by 1 so it starts at 0:01 instead of 0:00
-func pad_time(secs)
-    ret (secs < 10) ? ("0" + secs) : secs
-end
+# set up track timers rounding seconds to the closest update interval
+# offset by 1 so the clock starts at 0:01 instead of 0:00
 if c.display_timers
-    display_rounded_seconds = (safety_seconds - (safety_seconds % c.update_interval))  + 1
+    display_rounded_seconds = safety_seconds - (safety_seconds % c.update_interval) + 1
     display_elapsed = safety_minutes + ":" + pad_time(display_rounded_seconds) + " "
     display_total_minutes = ActivityDurationTotalSeconds / 60 | math.floor
     display_total_seconds = pad_time(ActivityDurationTotalSeconds % 60)
@@ -281,6 +270,7 @@ if c.display_timers
     c.pre_display = display_elapsed
     c.post_display = display_total
 end
+
 
 # generate artist and track title strings
 space = replace_chars(" ")
