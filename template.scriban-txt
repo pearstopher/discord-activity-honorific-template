@@ -8,7 +8,7 @@ max_chars = 30
 # honorific supports a max of 32 total
 
 
-# choose text to display to the left and right of the song info
+# choose text to display to the ♪left and right♪ of the song info
 pre_display = "♪"
 post_display = "♪"
 
