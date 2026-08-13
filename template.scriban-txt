@@ -4,11 +4,11 @@
 ##
 
 # length of scrolling characters
-max_chars = 10
+max_chars = 13
 # honorific supports a max of 32
 
 # display song timers
-display_timers = true
+display_timers = false
 # +10 to length when true (M:SS_ and _M:SS)
 # +2 to length when false (♪ and ♪)
 
@@ -124,11 +124,11 @@ end
 
 
 # generate title and artist strings with spacing to separate cycles
-spacing = "  "
-artist = replace_chars(ActivityArtist + spacing, char_replace_type, block_spaces)
-track = replace_chars(ActivityTrackTitle + spacing, char_replace_type, block_spaces)
+space = replace_chars(" ", char_replace_type, block_spaces)
+artist = replace_chars(ActivityArtist, char_replace_type, block_spaces) + space + space
+track = replace_chars(ActivityTrackTitle, char_replace_type, block_spaces)  + space + space
 if infinite_scroll
-    single_title = artist + track + replace_chars(spacing, char_replace_type, block_spaces)
+    single_title = artist + track + space
     full_title = single_title + single_title + single_title
 end
 
