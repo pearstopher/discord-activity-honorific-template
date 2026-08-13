@@ -278,6 +278,9 @@ else
     # calculate how long artist and track will be displayed based on frame count
     artist_interval = get_interval(artist, artist_segs)
     artist_secs = artist_segs * artist_interval
+    if artist_segs == 2
+        artist_secs = artist_secs + c.update_interval
+    end
     track_interval = get_interval(track, track_segs)
     track_secs = track_segs * track_interval
     if track_segs == 2
