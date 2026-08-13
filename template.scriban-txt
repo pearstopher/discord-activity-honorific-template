@@ -81,21 +81,6 @@ end
     FUNCTIONS
 ##
 
-# strip out all characters that can't be replaced with fixed-width symbols
-func clean_title(value)
-    result = ""
-    value = value | string.upcase
-
-    for i in 0..(value | string.size)
-        char = value | string.slice i 1
-
-        if char >= "A" && char <= "Z" || char >= "0" && char <= "9" || char == " "
-            result = result + char
-        end
-    end
-
-    ret result
-end
 
 # replace characters with XIV block letters
 # char_replace_type set in config, one of "none" "block" "mono"
@@ -124,8 +109,6 @@ func replace_chars(title, type, block_spaces)
         end
     end
 
-    # title = clean_title(title)
-
     # perform the character replacement
     result = ""
     for char in title
@@ -133,8 +116,6 @@ func replace_chars(title, type, block_spaces)
         if index >= 0
             newchar = chars | string.slice index 1
             result = result + newchar
-        # else
-        #    result = result + char
         end
     end
 
