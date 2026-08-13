@@ -30,7 +30,6 @@ update_interval: 3,
 static_interval: 6,
 
 
-
 # choose between infinite scroll and alternate display
 infinite_scroll: false,
 # *if true, display scrolls repeating artist and track name indefinitely
@@ -42,9 +41,8 @@ chars_at_a_time: 2,
 # (alternate only) choose to pad short text with whitespace up to max_width
 padding: false,
 
-# (alternate only) choose what type of c.elipses to display ("...", "", "…")
+# (alternate only) choose what type of c.elipses to display ("...", "", "…", "")
 elipses: "...",
-# *supports multiple characters but not 0 currently, cannot set to empty ""
 
 
 # choose what type of character replacement you prefer if any
@@ -80,14 +78,9 @@ c = config
 ##
 
 # determine which plugin is being used
-if ! Activity.Popularity
-    discord = true
-end
+discord = ! Activity.Popularity
 
-# Shared Template Variables
-# ActivityShared = Activity.Shared
-
-# Plugin Specific Variables
+# set plugin specific variables
 if discord
     ActivityElapsedTotalSeconds = Activity.Elapsed.TotalSeconds
     ActivityDurationTotalSeconds = Activity.Duration.TotalSeconds | math.floor
@@ -102,6 +95,9 @@ else
     ActivityArtist = Activity.Artists[0].Name
     ActivityTrackTitle = Activity.Name
 end
+# shared template variables can go here
+# ActivityShared = Activity.Shared
+
 # No template variables below this line
 
 
@@ -110,24 +106,18 @@ end
 ##
 
 
-# (all) replace characters with monospaced or XIV block letters
-# c.char_replace_type set in config, one of "none" "block" "mono"
+# replace characters with monospaced or XIV block letters
 func replace_chars(title)
+
+    alphabet = "0123456789 ABCDEFGHIJKLMNOPQRSTUVWXYZ?abcdefghijklmnopqrstuvwxyz"
+    mono_chars = "０１２３４５６７８９　ＡＢＣＤＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺ？ａｂｃｄｅｆｇｈｉｊｋｌｍｎｏｐｑｒｓｔｕｖｗｘｙｚ"
+    block_chars = "　"
 
     if c.char_replace_type == "none"
         ret title
-    end
-
-    mono_alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz 0123456789"
-    mono_chars = "ＡＢＣＤＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺａｂｃｄｅｆｇｈｉｊｋｌｍｎｏｐｑｒｓｔｕｖｗｘｙｚ　０１２３４５６７８９"
-    block_alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ 0123456789?"
-    block_chars = "　"
-
-    if c.char_replace_type == "mono"
-        alphabet = mono_alphabet
+    else if c.char_replace_type == "mono"
         chars = mono_chars
     else if c.char_replace_type == "block"
-        alphabet = block_alphabet
         chars = block_chars
         title = string.upcase title
         if c.block_spaces
@@ -139,40 +129,34 @@ func replace_chars(title)
     result = ""
     for char in title
         index = alphabet | string.index_of char
-        if index >= 0
-            newchar = chars | string.slice index 1
-            result = result + newchar
+        if index >= 0 && index < (chars | string.size)
+            result = result + (chars | string.slice index 1)
         end
     end
-
     ret result
 end
 
 # (alternate display) function to determine number of segments
-func segments(str)
+func seg_count(str)
     len = str | string.size
     dotlen = c.elipses | string.size
 
-    # 1 segment is up to c.max_chars characters
+    # segments must remain within max_chars including elipses
     if len <= c.max_chars
         ret 1
-    # 2 segments are up to c.max_chars - dotlen characters each
     else if len <= 2*(c.max_chars - dotlen)
         ret 2
-    # 3+ segments
-    # first and last are c.max_chars - dotlen
-    # middle segments are c.max_chars - 2dotlen
     else
-        # subtract the first and last segments, count the middle segments, combine the two
         ret (len - 2*(c.max_chars - dotlen)) / (c.max_chars - 2*dotlen) | math.ceil + 2
     end
 end
 
 # (alternate display) function to get the correct segment text
-func get_segment(str, seg, segmax, space, sec, secmax)
+func get_segment(str, space, seg, segmax, sec, secmax)
     len = str | string.size
     dotlen = c.elipses | string.size
 
+    # one segment display
     if segmax == 1
         if (! c.padding) || (len == c.max_chars)
             ret str
@@ -189,10 +173,17 @@ func get_segment(str, seg, segmax, space, sec, secmax)
                 ret str + pad_with
             end
         end
+
+    # first segment of a 2+ segment display
+    # (timer is adjusted so that seg exceeds segmax to force repeat for 2-segment displays)
     else if seg == 1 || seg > segmax
         ret str | string.slice 0 (c.max_chars - dotlen) | string.append c.elipses
+
+    # last segment of a 2+ segment display
     else if seg == segmax
         ret c.elipses | string.append (str | string.slice (len - (c.max_chars - dotlen)) len)
+
+    # interior segment of a 3+ segment display
     else
         start = len / segmax | math.floor * (seg - 1)
         ret c.elipses | string.append (str | string.slice start (c.max_chars - 2*dotlen)) | string.append c.elipses
@@ -200,7 +191,7 @@ func get_segment(str, seg, segmax, space, sec, secmax)
 end
 
 
-# function to extend length that a single frame title is displayed
+# (alternate display) function to modify display interval of single frame text
 func get_interval(str, segments)
     len = str | string.size
     interval = c.update_interval
@@ -209,33 +200,44 @@ func get_interval(str, segments)
         # display true single frame for time specified in config
         if (! c.padding) || (len == c.max_chars)
             interval = c.static_interval
-        # display padded single frame for 3 intervals to allow time to bounce (L R L)
-        # two-segment bounce is performed manually by extending total time by 1 interval
-        #  and then detecting a seg 3 when segmax is 2 in get_segment() above
+        # extend interval for 1-segment bounce
         else
             interval = extended_interval * 3
         end
+        # 2-segment bounces with an extra interval in get_secs, get_segment
     end
     ret interval
 end
+
+
+# (alternate display) function to get total # of display seconds
+func get_secs(segs, interval)
+    secs = segs * interval
+    # add an extra interval to two-segment displays for time to bounce
+    if segs == 2
+        secs = secs + c.update_interval
+    end
+    ret secs
+end
+
 
 ##
     END FUNCTIONS
 ##
 
 
-# generate title and artist strings with spacing to separate cycles
-sp = replace_chars(" ")
+# generate artist and track title strings
+space = replace_chars(" ")
 artist = replace_chars(ActivityArtist)
 track = replace_chars(ActivityTrackTitle)
 if c.infinite_scroll
-    single_title = artist + sp + sp + track + sp + sp + sp
-    full_title = single_title + single_title + single_title
+    single_title = artist + space*2 + track + space*3
+    scroll_title = single_title * 3
 end
 
 
 # create a custom clock to disallow updates with < c.update_interval seconds left
-# this prevents updates being sent too fast if the scroll updates immediately before a new song
+# this prevents updates being sent too close to a refresh from a new song starting
 safety_total_seconds = ActivityElapsedTotalSeconds | math.floor
 safety_max = ActivityDurationTotalSeconds - c.update_interval
 if (safety_total_seconds > safety_max)
@@ -243,69 +245,54 @@ if (safety_total_seconds > safety_max)
 end
 safety_minutes = (safety_total_seconds / 60) | math.floor
 safety_seconds = safety_total_seconds % 60
+# mark unsafe time with display_ prefix below this line
+# round safe time with math.floor (not math.ceil) to prevent timing errors
 
 
-# set up track timers in the format M:SS
+# set up track timers in the format MM:SS
 # round seconds to the closest update interval
 # offset by 1 so it starts at 0:01 instead of 0:00
-elapsed_seconds = (safety_seconds - (safety_seconds % c.update_interval))  + 1
-if elapsed_seconds < 10
-    elapsed_seconds = "0" + elapsed_seconds
+func pad_time(secs)
+    ret (secs < 10) ? ("0" + secs) : secs
 end
-time_elapsed = safety_minutes | string.append ":" | string.append elapsed_seconds
-time_total_minutes = ActivityDurationTotalSeconds / 60 | math.floor
-time_total_seconds = ActivityDurationTotalSeconds % 60
-if time_total_seconds < 10
-    time_total_seconds = "0" + time_total_seconds
+if c.display_timers
+    display_rounded_seconds = (safety_seconds - (safety_seconds % c.update_interval))  + 1
+    display_elapsed = safety_minutes + ":" + pad_time(display_rounded_seconds) + " "
+    display_total_minutes = ActivityDurationTotalSeconds / 60 | math.floor
+    display_total_seconds = pad_time(ActivityDurationTotalSeconds % 60)
+    display_total = " " + display_total_minutes + ":" + display_total_seconds
+    c.pre_display = display_elapsed
+    c.post_display = display_total
 end
-time_total = time_total_minutes | string.append ":" | string.append time_total_seconds
 
 
-# ready to generate the actual text to display
+# generate final scroll text
 if c.infinite_scroll
-
-    # set up infinite scrolling
-    scroll_title = full_title
     cycle_length = single_title | string.size
     position = (((safety_total_seconds / c.update_interval) | math.floor) * c.chars_at_a_time) % cycle_length
-    scroll_title = scroll_title | string.slice position c.max_chars
+    output = scroll_title | string.slice position c.max_chars
 
+# generate final alternate text
 else
-    # get number of segments for each
-    artist_segs = segments(artist)
-    track_segs = segments(track)
-
-    # calculate how long artist and track will be displayed based on frame count
+    artist_segs = seg_count(artist)
     artist_interval = get_interval(artist, artist_segs)
-    artist_secs = artist_segs * artist_interval
-    if artist_segs == 2
-        artist_secs = artist_secs + c.update_interval
-    end
+    artist_secs = get_secs(artist_segs, artist_interval)
+    track_segs = seg_count(track)
     track_interval = get_interval(track, track_segs)
-    track_secs = track_segs * track_interval
-    if track_segs == 2
-        track_secs = track_secs + c.update_interval
-    end
-    total_display_secs = artist_secs + track_secs
+    track_secs = get_secs(track_segs, track_interval)
 
-    # main display logic
-    secs = safety_total_seconds % total_display_secs
-    if (secs < artist_secs)
-        segment = secs / artist_interval | math.floor + 1
-        scroll_title = get_segment(artist, segment, artist_segs, sp, secs, artist_secs)
+    sec = safety_total_seconds % (artist_secs + track_secs)
+    if (sec < artist_secs)
+        seg = sec / artist_interval | math.floor + 1
+        output = get_segment(artist, space, seg, artist_segs, sec, artist_secs)
     else
-        secs = secs - artist_secs
-        segment = secs / track_interval  | math.floor + 1
-        scroll_title = get_segment(track, segment, track_segs, sp, secs, track_secs)
+        sec = sec - artist_secs
+        seg = sec / track_interval  | math.floor + 1
+        output = get_segment(track, space, seg, track_segs, sec, track_secs)
     end
 end
 
 # generate final output
-if c.display_timers
-    output = time_elapsed + " " + scroll_title + " " + time_total
-else
-    output = c.pre_display + scroll_title + c.post_display
-end
-
+output = c.pre_display + output + c.post_display
 output | string.truncate 32
 -}}
