@@ -172,9 +172,11 @@ func get_segment(str, seg, segmax, maxlen, dots, padding, space)
         if (! padding) || (len == maxlen)
             ret str
         else
-            half_padding = string.repeat space ((maxlen - len) / 2 | math.floor)
-            ret half_padding + str + half_padding
-
+            pad_with = ""
+            for i in 0..(maxlen - len - 1)
+                pad_with = pad_with + space
+            end
+            ret pad_with + str
         end
     else if seg == 1
         ret str | string.slice 0 (maxlen - dotlen) | string.append dots
