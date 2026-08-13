@@ -163,20 +163,25 @@ func segments(str, maxlen, dots)
 end
 
 # (alternate display) function to get the correct segment text
-func get_segment(str, seg, segmax, maxlen, dots, padding, space)
+func get_segment(str, seg, segmax, maxlen, dots, padding, space, sec, maxsec)
     len = str | string.size
     dotlen = dots | string.size
 
     if segmax == 1
-        # create before/after padding
         if (! padding) || (len == maxlen)
             ret str
         else
+            # create before/after padding bounce
             pad_with = ""
             for i in 0..(maxlen - len - 1)
                 pad_with = pad_with + space
             end
-            ret pad_with + str
+            interval = (maxsec / 3) | math.floor
+            if (sec > interval) && (sec < interval * 2)
+                ret pad_with + str
+            else
+                ret str + pad_with
+            end
         end
     else if seg == 1
         ret str | string.slice 0 (maxlen - dotlen) | string.append dots
@@ -197,10 +202,19 @@ func resize(str, len, dots)
     ret str
 end
 
-# function to double the length that a single frame title is displayed
-func fair(update_interval, segments)
+# function to extend length that a single frame title is displayed
+func fair(update_interval, segments, padding, str, maxlen)
+    len = str | string.size
+
     if segments == 1
-        update_interval = update_interval * 2
+        # display true single frame for twice as long
+        if (! padding) || (len == maxlen)
+            update_interval = update_interval * 2
+        # display padded single frame for 3x as long
+        # (time to bounce L - R - L)
+        else
+            update_interval = update_interval * 3
+        end
     end
     ret update_interval
 end
@@ -262,18 +276,21 @@ else
     track_segs = segments(track, max_chars, elipses)
 
     # calculate how long artist and track will be displayed based on frame count
-    artist_secs = artist_segs * fair(update_interval, artist_segs)
-    track_secs = track_segs * fair(update_interval, track_segs)
+    artist_secs = artist_segs * fair(update_interval, artist_segs, padding, artist, max_chars)
+    track_secs = track_segs * fair(update_interval, track_segs, padding, track, max_chars)
     total_display_secs = artist_secs + track_secs
 
     # main display logic
     secs = safety_total_seconds % total_display_secs
     if (secs < artist_secs)
-        segment = (secs) / fair(update_interval, artist_segs) | math.ceil
-        scroll_title = get_segment(artist, segment, artist_segs, max_chars, elipses, padding, sp)
+        fair_artist_secs = fair(update_interval, artist_segs, padding, artist, max_chars)
+        segment = secs / fair_artist_secs | math.ceil
+        scroll_title = get_segment(artist, segment, artist_segs, max_chars, elipses, padding, sp, secs, artist_secs)
     else
-        segment = (secs - artist_secs) / fair(update_interval, track_segs) | math.ceil
-        scroll_title = get_segment(track, segment, track_segs, max_chars, elipses, padding, sp)
+        secs = secs - artist_secs
+        fair_track_secs = fair(update_interval, track_segs, padding, track, max_chars)
+        segment = secs / fair_track_secs  | math.ceil
+        scroll_title = get_segment(track, segment, track_segs, max_chars, elipses, padding, sp, secs, track_secs)
     end
 end
 
