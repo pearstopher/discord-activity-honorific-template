@@ -182,6 +182,11 @@ func get_segment(str, space, seg, segmax, sec, secmax)
         else
             # create before/after padding bounce
             pad_with = space*(c.max_chars - len)
+            # add a few longer spaces to the regular text
+            if c.char_replace_type == "none"
+                replace_count =(c.max_chars - len)/3 | math.floor + 1
+                pad_with = pad_with | string.slice replace_count | string.append "　"*replace_count
+            end
             interval = (secmax / 3) | math.floor
             if (sec >= interval) && (sec < interval * 2)
                 ret pad_with + str
